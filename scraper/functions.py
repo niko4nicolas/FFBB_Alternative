@@ -14,7 +14,7 @@ def get_team_squad(team_name):
 def get_team_club(team_name):
     team_club = re.sub(r' - [0-9]', '', team_name) # Suppression numéro d'équipe
     team_club = team_club.title() # Formattage majuscule
-    return team_club
+    return team_club.strip()
 
 # Obtenir le lien d'une équipe
 def get_team_link(link):
