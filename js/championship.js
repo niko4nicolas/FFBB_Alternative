@@ -104,7 +104,7 @@ fetch('../data/data.json')
 		matchday_selection.addEventListener("change", () => load_and_display_matchday_fixtures(games, matchday_selection.value, selected_club_name))
 
 		// Précédent classement : prochaine journée - 2)
-		ranking = compute_previous_ranking(teams, games, next_matchday-2)
+		ranking = compute_ranking_until_matchday(teams, games, next_matchday-2)
 
 		// Classement général
 		display_current_ranking(ranking)
@@ -114,27 +114,6 @@ fetch('../data/data.json')
 // |---------------|
 // |   Fonctions   |
 // |---------------|
-
-function compute_next_matchday(games) {
-	next_matchday = 1
-	for (g in games) {
-		next_matchday = games[g].jour
-		if (!games[g].match_joue) {
-			break
-		}
-	}
-	return next_matchday
-}
-
-function compute_nb_matchdays(games) {
-	matchday_counter = 1
-	for (g in games) {
-		if (games[g].jour > matchday_counter) {
-			matchday_counter = games[g].jour
-		}
-	}
-	return matchday_counter
-}
 
 function display_current_ranking(ranking) {
 	for (t in teams) {
@@ -204,73 +183,6 @@ function load_matchday_fixtures(games, selected_matchday) {
 function load_and_display_matchday_fixtures(games, selected_matchday, club_name) {
 	next_fixtures = load_matchday_fixtures(games, selected_matchday) 
 	display_fixtures(next_fixtures, 'next_fixtures', club_name, '', true, false)
-}
-
-function compute_previous_ranking(teams, games, until_matchday) {
-	ranking = []
-	for (t in teams) {
-		team = teams[t]
-		club_name = team.club
-		// Copier le tableau pour ne pas modifier la liste des rencontres
-		filtered_games = filter_games(games.slice(), club_name, true, true)
-		team_points = 0
-		team_difference = 0
-		match_counter = 1
-
-		for (g in filtered_games) {
-			if (match_counter > until_matchday) {
-				break
-			}
-			game = filtered_games[g]
-			if (game.match_joue) {
-
-				b_is_home_game = club_name == game.club_domicile ? true : false;
-
-				if (b_is_home_game) {
-					team_score = game.resultat_equipe_domicile
-					opponent_score = game.resultat_equipe_exterieur
-				} else {
-					team_score = game.resultat_equipe_exterieur
-					opponent_score = game.resultat_equipe_domicile
-				}
-				team_score = parseInt(team_score)
-				opponent_score = parseInt(opponent_score)
-				if (team_score > opponent_score) {
-					team_points += 2
-				} else {
-					team_points += 1
-				}
-				team_difference += team_score - opponent_score
-				match_counter++
-			}
-		}
-		team_points = team_points * 10000 + team_difference
-		ranking.push([club_name, team_points])
-	}
-	ranking.sort((a, b) => b[1] - a[1])
-	return ranking
-}
-
-function filter_games(games, keep_team_name, b_keep_home_games, b_keep_away_games) {
-	var i = games.length
-	while (i--) {
-		// Exclure les matchs auxquels l'équipe ne participe pas
-		if ( (keep_team_name != games[i].club_domicile) && (keep_team_name != games[i].club_exterieur) ) {
-			games.splice(i, 1);
-			continue
-		}
-		// Si demandé, exclure les matchs où l'équipe joue à domicile
-		if ( (b_keep_home_games == false) && (keep_team_name == games[i].club_domicile) ) {
-			games.splice(i, 1);
-			continue
-		}
-		// Si demandé, exclure les matchs où l'équipe joue à l'extérieur
-		if ( (b_keep_away_games == false) && (keep_team_name == games[i].club_exterieur)) {
-			games.splice(i, 1);
-			continue
-		}
-	}
-	return games
 }
 
 function reload_new_team(new_team) {

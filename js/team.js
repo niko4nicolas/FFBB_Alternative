@@ -34,11 +34,6 @@ fetch('../data/data.json')
 			}
 		}
 
-		// Toutes les rencontres de la poule
-		games = selected_pool.rencontres
-		// Toutes les équipes de la poule
-		teams = selected_pool.equipes
-
 		selected_club_name = localStorage.getItem("selected_club_name")
 		// Recherche de l'équipe à afficher
 		page_club_name = window.location.search
@@ -52,7 +47,7 @@ fetch('../data/data.json')
 		// Retirer les matchs à ne pas afficher
 		keep_home_games = !document.getElementById("exterieur").checked
 		keep_away_games = !document.getElementById("domicile").checked
-		filtered_games = filter_games(games, page_club_name, keep_home_games, keep_away_games)
+		filtered_games = filter_games(selected_pool.rencontres, page_club_name, keep_home_games, keep_away_games)
 
 		previous_fixtures = []
 		next_fixtures = []
@@ -68,48 +63,15 @@ fetch('../data/data.json')
 		display_fixtures(previous_fixtures, 'results_fixtures', selected_club_name, page_club_name, true, true)
 		// Afficher le calendrier d'une équipe
 		display_fixtures(next_fixtures, 'calendar_fixtures', selected_club_name, page_club_name, true, true)
-		
-		// Récupérer l'équipe
-		for (equipe in selected_pool.equipes) {
-			if ( selected_pool.equipes[equipe].club ==  page_club_name ) {
-				team = selected_pool.equipes[equipe]
-				break
-			}
-		}
 
 		// Récupérer les statistiques
-		stats_data = compute_stats(team.club, filtered_games)
+		stats_data = compute_stats(page_club_name, filtered_games)
 
-		// Afficher les statistiques
+		// Afficher les statistiques de l'équipe
 		display_stats(stats_data)
-		
-		// Réupération des données pour les graphiques
-		matchday_data = []
-		points_scored_data = []
-		points_cashed_data = []
-		opponents_teams_data = []
-		for (g in filtered_games) {
-			if (filtered_games[g].match_joue == true) {
-				matchday_data.push(filtered_games[g].jour)
-				home_squad = get_div_squad(filtered_games[g].equipe_domicile_numero)
-				away_squad = get_div_squad(filtered_games[g].equipe_exterieur_numero)
 
-				b_is_home_game = page_club_name == filtered_games[g].club_domicile ? true : false;
-				
-				if (true == b_is_home_game) {
-					points_scored_data.push(filtered_games[g].resultat_equipe_domicile)
-					points_cashed_data.push(filtered_games[g].resultat_equipe_exterieur)
-					opponents_teams_data.push(filtered_games[g].club_exterieur + away_squad)
-				} else {
-					points_scored_data.push(filtered_games[g].resultat_equipe_exterieur)
-					points_cashed_data.push(filtered_games[g].resultat_equipe_domicile)
-					opponents_teams_data.push(filtered_games[g].club_domicile + home_squad)
-				}
-			}
-		}
-
-		// Affichage des graphiques des points
-		display_charts(matchday_data, points_scored_data, points_cashed_data, opponents_teams_data)
+		/* Construire et afficher les données sur le graphiques */
+		compute_and_display_graph_data(page_club_name, filtered_games)
 
 		// Changement de mode des graphiques
 		document.getElementById("divide").addEventListener("click", () => display_charts(matchday_data, points_scored_data, points_cashed_data, opponents_teams_data))
@@ -128,6 +90,35 @@ fetch('../data/data.json')
 // |---------------|
 // |   Fonctions   |
 // |---------------|
+
+function compute_and_display_graph_data(page_club_name, filtered_games) {		
+	// Réupération des données pour les graphiques
+	matchday_data = []
+	points_scored_data = []
+	points_cashed_data = []
+	opponents_teams_data = []
+	for (g in filtered_games) {
+		fixture = filtered_games[g]
+		if (fixture.match_joue == true) {
+			matchday_data.push(fixture.jour)
+			home_squad = get_div_squad(fixture.equipe_domicile_numero)
+			away_squad = get_div_squad(fixture.equipe_exterieur_numero)
+			
+			if (page_club_name == fixture.club_domicile) {
+				points_scored_data.push(fixture.resultat_equipe_domicile)
+				points_cashed_data.push(fixture.resultat_equipe_exterieur)
+				opponents_teams_data.push(fixture.club_exterieur + away_squad)
+			} else {
+				points_scored_data.push(fixture.resultat_equipe_exterieur)
+				points_cashed_data.push(fixture.resultat_equipe_domicile)
+				opponents_teams_data.push(fixture.club_domicile + home_squad)
+			}
+		}
+	}
+
+	// Affichage des graphiques des points
+	display_charts(matchday_data, points_scored_data, points_cashed_data, opponents_teams_data)
+}
 
 /**
  * Returns a hash code from a string
@@ -205,28 +196,6 @@ download_schedule = (function () {
 		window.URL.revokeObjectURL(url)
 	};
 }());
-
-function filter_games(games, keep_team_name, b_keep_home_games, b_keep_away_games) {
-	var i = games.length
-	while (i--) {
-		// Exclure les matchs auxquels l'équipe ne participe pas
-		if ( (keep_team_name != games[i].club_domicile) && (keep_team_name != games[i].club_exterieur) ) {
-			games.splice(i, 1);
-			continue
-		}
-		// Si demandé, exclure les matchs où l'équipe joue à domicile
-		if ( (b_keep_home_games == false) && (keep_team_name == games[i].club_domicile) ) {
-			games.splice(i, 1);
-			continue
-		}
-		// Si demandé, exclure les matchs où l'équipe joue à l'extérieur
-		if ( (b_keep_away_games == false) && (keep_team_name == games[i].club_exterieur)) {
-			games.splice(i, 1);
-			continue
-		}
-	}
-	return games
-}
 
 function compute_stats(club_name, games) {
 	stats_data = {

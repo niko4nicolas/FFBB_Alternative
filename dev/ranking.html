@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>FFBB Alternative - Dev Mode</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+	<link rel="mask-icon" href="../assets/ffbb_logo.svg" color="#5bbad5">
+	<link rel="stylesheet" href="../css/style.css"/>
+</head>
+
+<body>
+	<div class="header">
+		<div class="header-infos">
+			<a href="../championship" class="header-back"><svg viewBox="0 0 24 24"><path d="M13 8.5L9.5 12l3.5 3.5"></path><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path></svg></a>
+			<div class="header-texts">
+				<div class="header-subtitle">ffbb-scraper</div>
+				<div class="header-title">Dev Mode</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="charts-header">
+			<div class="title">Classements</div>
+		</div>
+		<div class="charts"></div>
+	</div>
+
+	<div class="container">
+		<div class="title">Calcul</div>
+			<ul class="ranking" id="former_ranking">
+				<li class="ranking-head">
+				<div class="ranking-pool">Journée</div>
+				<div></div>
+				<div class="hidden-on-mobile"></div>
+				<div class="hidden-on-mobile"></div>
+				<div class="hidden-on-mobile"></div>
+				<div class="hidden-on-mobile"></div>
+				<div class="hidden-on-mobile"></div>
+				<div></div>
+				<div>PTS</div>
+				</li>
+	  		</ul>
+	</div>  
+
+	<div class="footer">
+		<div class="copyright hidden-on-mobile">
+			<div>© 2022 <a href="https://lucasboucher.fr">Lucas Boucher</a></div>
+		</div>
+		<ul class="links">
+			<li><a href="https://github.com/lucasboucher/FFBB_Alternative">GitHub</a></li>
+			<li><a href="http://www.ffbb.com/accueil">FFBB</a></li>
+		</ul>
+	</div>
+
+	<script src="../js/common.js"></script>
+	<script src="../js/dev_ranking.js"></script>
+
+</body>
+</html>
