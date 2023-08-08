@@ -145,7 +145,7 @@ for pool_id, pool_name in pools:
     championship_pools.append(pool_data)
 
 # Formattage des données
-championship_data = {'nom': championship_name, 'lien_championnat': championship_link, 'comite': championship_committee, 'poules': championship_pools}
+championship_data = {'id': championship_id, 'nom': championship_name, 'lien_championnat': championship_link, 'comite': championship_committee, 'poules': championship_pools}
 
 # Création du fichier JSON
 output_filename = 'data.json' # TODO: nommer le fichier avec l'id du championnat

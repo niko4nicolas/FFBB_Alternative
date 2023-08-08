@@ -9,7 +9,6 @@ fetch('../data/data.json')
 		// Informations du championnat
 		document.getElementsByClassName('header-subtitle')[0].innerHTML = data.comite // Comité du championnat
 		document.getElementsByClassName('header-title')[0].innerHTML = data.nom // Nom du championnat
-		document.getElementsByClassName('ranking-ffbb')[0].href = data.lien_championnat // Lien du classement FFBB officiel dans le logo FFBB de la tête de classement
 
 		// Chargement de la poule sélectionnée
 		selected_pool_name = localStorage.getItem("selected_pool_name")
@@ -32,6 +31,9 @@ fetch('../data/data.json')
 			pool_selection.innerHTML += `<option value="${pool_name}" ${selected}>${pool_name}</option>`
 		}
 
+		// Lien du classement FFBB officiel dans le logo FFBB de la tête de classement
+		championship_id = parseInt(data.id, 16)
+		document.getElementsByClassName('ranking-ffbb')[0].href = `${data.lien_championnat}?r=${championship_id}&d=${selected_pool.id}`
 		// Mise à jour du nom de poule
 		document.getElementsByClassName('ranking-pool')[0].innerHTML = selected_pool.poule
 
