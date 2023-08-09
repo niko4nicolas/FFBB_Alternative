@@ -16,6 +16,27 @@ function get_div_squad(squad) {
 	}
 }
 
+function compute_next_matchday(games) {
+	next_matchday = 1
+	for (g in games) {
+		next_matchday = games[g].jour
+		if (!games[g].match_joue) {
+			break
+		}
+	}
+	return next_matchday
+}
+
+function compute_nb_matchdays(games) {
+	matchday_counter = 1
+	for (g in games) {
+		if (games[g].jour > matchday_counter) {
+			matchday_counter = games[g].jour
+		}
+	}
+	return matchday_counter
+}
+
 /**
  * Affiche les rencontres sélectionné sur une classe CSS choisi
  * 
@@ -112,4 +133,89 @@ function display_fixtures(games, main_class, favorite_club_name, page_club_name,
 			</div>
 		`
 	}
+}
+
+/**
+ * Filtrer la liste de rencontres. La liste des rencontres donnée en paramètre
+ * est copiée afin de ne pas la modifier
+ * 
+ * @param {array} games Liste de rencontres
+ * @param {string} keep_team_name Nom de l'équipe à conserver (une seule équipe)
+ * @param {boolean} b_keep_home_games Conserver les rencontres à domicile ?
+ * @param {boolean} b_keep_away_games Conserver les recontres à l'extérieur ?
+ * @returns La liste des rencontres avec uniquement les rencontres qui répondent aux critères
+ */
+function filter_games(games, keep_team_name, b_keep_home_games, b_keep_away_games) {
+	/* Copier le tableau pour ne pas modifier la liste des rencontres */
+	filtered_games = games.slice()
+
+	i = filtered_games.length
+	while (i--) {
+		// Exclure les matchs auxquels l'équipe ne participe pas
+		if ( (keep_team_name != filtered_games[i].club_domicile) && (keep_team_name != filtered_games[i].club_exterieur) ) {
+			filtered_games.splice(i, 1);
+			continue
+		}
+		// Si demandé, exclure les matchs où l'équipe joue à domicile
+		if ( (b_keep_home_games == false) && (keep_team_name == filtered_games[i].club_domicile) ) {
+			filtered_games.splice(i, 1);
+			continue
+		}
+		// Si demandé, exclure les matchs où l'équipe joue à l'extérieur
+		if ( (b_keep_away_games == false) && (keep_team_name == filtered_games[i].club_exterieur)) {
+			filtered_games.splice(i, 1);
+			continue
+		}
+	}
+	return filtered_games
+}
+
+/**
+ * Calcul du classement jusqu'à un jour donné. Les égalités à la différence de
+ * points ne sont gérées
+ * 
+ * @param {array} teams Liste des équipes du championnat 
+ * @param {array} games Liste de rencontres à prendre en compte pour le classement
+ * @param {integer} until_matchday Numéro de la journée à laquelle arrêter le calcul
+ * @returns La liste des équipes classées de la meilleure à la moins bonne
+ */
+function compute_ranking_until_matchday(teams, games, until_matchday) {
+	ranking = []
+	for (t in teams) {
+		club_name = teams[t].club
+		filtered_games = filter_games(games, club_name, true, true)
+		team_points = 0
+		team_difference = 0
+		match_counter = 1
+
+		for (g in filtered_games) {
+			if (match_counter > until_matchday) {
+				/* do not break to handle the case where games are not sorted by matchday */
+				continue
+			}
+			fixture = filtered_games[g]
+			if (fixture.match_joue) {
+				if (club_name == fixture.club_domicile ) {
+					team_score = fixture.resultat_equipe_domicile
+					opponent_score = fixture.resultat_equipe_exterieur
+				} else {
+					team_score = fixture.resultat_equipe_exterieur
+					opponent_score = fixture.resultat_equipe_domicile
+				}
+				team_score = parseInt(team_score)
+				opponent_score = parseInt(opponent_score)
+				if (team_score > opponent_score) {
+					team_points += 2
+				} else {
+					team_points += 1
+				}
+				team_difference += team_score - opponent_score
+				match_counter++
+			}
+		}
+		team_points = team_points * 10000 + team_difference
+		ranking.push([club_name, team_points])
+	}
+	ranking.sort((a, b) => b[1] - a[1])
+	return ranking
 }

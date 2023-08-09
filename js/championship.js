@@ -104,10 +104,17 @@ fetch('../data/data.json')
 		matchday_selection.addEventListener("change", () => load_and_display_matchday_fixtures(games, matchday_selection.value, selected_club_name))
 
 		// Précédent classement : prochaine journée - 2)
-		ranking = compute_previous_ranking(teams, games, next_matchday-2)
+		ranking = compute_ranking_until_matchday(teams, games, next_matchday-2)
 
 		// Classement général
 		display_current_ranking(ranking)
+
+		/* Evolution du classement */
+		if (next_matchday > 2) {
+			ranking_history = compute_ranking_history(teams, games, next_matchday-1)
+
+			display_ranking_evolution(ranking_history)
+		}
 	})
 
 
@@ -115,25 +122,59 @@ fetch('../data/data.json')
 // |   Fonctions   |
 // |---------------|
 
-function compute_next_matchday(games) {
-	next_matchday = 1
-	for (g in games) {
-		next_matchday = games[g].jour
-		if (!games[g].match_joue) {
-			break
-		}
+function display_ranking_evolution(ranking_history) {
+	document.getElementsByClassName('charts')[0].innerHTML =
+	`
+		<div class="chart">
+			<canvas id="ranking"></canvas>
+		</div>
+	`
+
+	datasets = []
+	colors = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+
+	let i = 0
+	for (ranking_team in ranking_history) {
+		dataset = {}
+		color_index = i % colors.length
+		dataset['label'] = ranking_team
+		dataset['data'] = ranking_history[ranking_team]
+		dataset['borderColor'] = colors[color_index]
+		dataset['backgroundColor'] = colors[color_index]
+		dataset['pointRadius'] = 3
+		dataset['borderWidth'] = 3
+		datasets.push(dataset)
+		i++
 	}
-	return next_matchday
+
+	const ctx = document.getElementById('ranking')
+	const data_chart = {
+		labels: matchday_data,
+		datasets: datasets
+	}
+	config = get_chart_config(data_chart, "Evolution du classement")
+	new Chart(ctx, config)
 }
 
-function compute_nb_matchdays(games) {
-	matchday_counter = 1
-	for (g in games) {
-		if (games[g].jour > matchday_counter) {
-			matchday_counter = games[g].jour
+function compute_ranking_history(teams, games, until_matchday) {
+	/* Construction d'un dictionnaire avec le nom de l'équipe comme clé
+	et un tableau vide où seront stockés les classements par journée */
+	ranking_history = {}
+	for (t in teams) {
+		ranking_history[teams[t].club] = []
+	}
+
+	matchday_data = []
+	/* Calcul du classement pour chaque journée */
+	for (let i = 1; i <= until_matchday; i++) {
+		matchday_data.push(i)
+		ranking_day = compute_ranking_until_matchday(teams, games, i)
+		for (r in ranking_day) {
+			club = ranking_day[r][0]
+			ranking_history[club][i-1] = parseInt(r) +1
 		}
 	}
-	return matchday_counter
+	return ranking_history
 }
 
 function display_current_ranking(ranking) {
@@ -184,7 +225,7 @@ function display_current_ranking(ranking) {
 				</div>
 			</a>
 		</li>
-		`
+		`	
 	}
 }
 
@@ -206,73 +247,6 @@ function load_and_display_matchday_fixtures(games, selected_matchday, club_name)
 	display_fixtures(next_fixtures, 'next_fixtures', club_name, '', true, false)
 }
 
-function compute_previous_ranking(teams, games, until_matchday) {
-	ranking = []
-	for (t in teams) {
-		team = teams[t]
-		club_name = team.club
-		// Copier le tableau pour ne pas modifier la liste des rencontres
-		filtered_games = filter_games(games.slice(), club_name, true, true)
-		team_points = 0
-		team_difference = 0
-		match_counter = 1
-
-		for (g in filtered_games) {
-			if (match_counter > until_matchday) {
-				break
-			}
-			game = filtered_games[g]
-			if (game.match_joue) {
-
-				b_is_home_game = club_name == game.club_domicile ? true : false;
-
-				if (b_is_home_game) {
-					team_score = game.resultat_equipe_domicile
-					opponent_score = game.resultat_equipe_exterieur
-				} else {
-					team_score = game.resultat_equipe_exterieur
-					opponent_score = game.resultat_equipe_domicile
-				}
-				team_score = parseInt(team_score)
-				opponent_score = parseInt(opponent_score)
-				if (team_score > opponent_score) {
-					team_points += 2
-				} else {
-					team_points += 1
-				}
-				team_difference += team_score - opponent_score
-				match_counter++
-			}
-		}
-		team_points = team_points * 10000 + team_difference
-		ranking.push([club_name, team_points])
-	}
-	ranking.sort((a, b) => b[1] - a[1])
-	return ranking
-}
-
-function filter_games(games, keep_team_name, b_keep_home_games, b_keep_away_games) {
-	var i = games.length
-	while (i--) {
-		// Exclure les matchs auxquels l'équipe ne participe pas
-		if ( (keep_team_name != games[i].club_domicile) && (keep_team_name != games[i].club_exterieur) ) {
-			games.splice(i, 1);
-			continue
-		}
-		// Si demandé, exclure les matchs où l'équipe joue à domicile
-		if ( (b_keep_home_games == false) && (keep_team_name == games[i].club_domicile) ) {
-			games.splice(i, 1);
-			continue
-		}
-		// Si demandé, exclure les matchs où l'équipe joue à l'extérieur
-		if ( (b_keep_away_games == false) && (keep_team_name == games[i].club_exterieur)) {
-			games.splice(i, 1);
-			continue
-		}
-	}
-	return games
-}
-
 function reload_new_team(new_team) {
 	localStorage.setItem("selected_club_name", new_team);
 	location.reload();
@@ -281,6 +255,80 @@ function reload_new_team(new_team) {
 function reload_new_pool(new_pool) {
 	localStorage.setItem("selected_pool_name", new_pool);
 	location.reload();
+}
+
+// Obtenir la configuration d'un graphique
+function get_chart_config(data_chart, title) {
+	config = {
+		type: 'line',
+		data: data_chart,
+		options: {
+			interaction: {
+				intersect: false,
+				mode: 'point'
+			},
+			maintainAspectRatio: false,
+			plugins: {
+				title: {
+					display: true,
+					text: title,
+					font: {
+						weight: 600
+					}
+				},
+				legend: {
+					display: true
+				},
+				tooltip: {
+					backgroundColor: 'rgba(43, 43, 43, 0.8)',
+					titleFont: {
+						weight: 500
+					},
+					footerFont: {
+						weight: 700
+					},
+					callbacks: {
+						title: function(context) {
+							return "J" + context[0].label;
+						},
+						label: function(context) {
+							console.log(context)
+							let label = '#'
+							if (context.parsed.y !== null) {
+								label += context.parsed.y + " " + context.dataset.label
+							}
+							return label;
+						}
+					}
+				}
+			},
+			scales: {
+				x: {
+					grid: {
+						color: "rgb(26, 26, 26)",
+						drawTicks: false,
+					}
+				},
+				y: {
+					//suggestedMax: 14,
+					display: false,
+					min: 0,
+					reverse: true,
+					ticks: {
+						maxTicksLimit: 8,
+					},
+					grid: {
+						titleFont: {
+							weight: 200
+						},
+						color: "rgb(26, 26, 26)",
+						drawTicks: false,
+					}
+				}
+			}
+		}
+	}
+	return config
 }
 
 // |-----------|
