@@ -108,12 +108,74 @@ fetch('../data/data.json')
 
 		// Classement général
 		display_current_ranking(ranking)
+
+		/* Evolution du classement */
+		if (next_matchday > 2) {
+			ranking_history = compute_ranking_history(teams, games, next_matchday-1)
+
+			display_ranking_evolution(ranking_history)
+		}
 	})
 
 
 // |---------------|
 // |   Fonctions   |
 // |---------------|
+
+function display_ranking_evolution(ranking_history) {
+	document.getElementsByClassName('charts')[0].innerHTML =
+	`
+		<div class="chart">
+			<canvas id="ranking"></canvas>
+		</div>
+	`
+
+	datasets = []
+	colors = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+
+	let i = 0
+	for (ranking_team in ranking_history) {
+		dataset = {}
+		color_index = i % colors.length
+		dataset['label'] = ranking_team
+		dataset['data'] = ranking_history[ranking_team]
+		dataset['borderColor'] = colors[color_index]
+		dataset['backgroundColor'] = colors[color_index]
+		dataset['pointRadius'] = 3
+		dataset['borderWidth'] = 3
+		datasets.push(dataset)
+		i++
+	}
+
+	const ctx = document.getElementById('ranking')
+	const data_chart = {
+		labels: matchday_data,
+		datasets: datasets
+	}
+	config = get_chart_config(data_chart, "Evolution du classement")
+	new Chart(ctx, config)
+}
+
+function compute_ranking_history(teams, games, until_matchday) {
+	/* Construction d'un dictionnaire avec le nom de l'équipe comme clé
+	et un tableau vide où seront stockés les classements par journée */
+	ranking_history = {}
+	for (t in teams) {
+		ranking_history[teams[t].club] = []
+	}
+
+	matchday_data = []
+	/* Calcul du classement pour chaque journée */
+	for (let i = 1; i <= until_matchday; i++) {
+		matchday_data.push(i)
+		ranking_day = compute_ranking_until_matchday(teams, games, i)
+		for (r in ranking_day) {
+			club = ranking_day[r][0]
+			ranking_history[club][i-1] = parseInt(r) +1
+		}
+	}
+	return ranking_history
+}
 
 function display_current_ranking(ranking) {
 	for (t in teams) {
@@ -163,7 +225,7 @@ function display_current_ranking(ranking) {
 				</div>
 			</a>
 		</li>
-		`
+		`	
 	}
 }
 
@@ -193,6 +255,80 @@ function reload_new_team(new_team) {
 function reload_new_pool(new_pool) {
 	localStorage.setItem("selected_pool_name", new_pool);
 	location.reload();
+}
+
+// Obtenir la configuration d'un graphique
+function get_chart_config(data_chart, title) {
+	config = {
+		type: 'line',
+		data: data_chart,
+		options: {
+			interaction: {
+				intersect: false,
+				mode: 'point'
+			},
+			maintainAspectRatio: false,
+			plugins: {
+				title: {
+					display: true,
+					text: title,
+					font: {
+						weight: 600
+					}
+				},
+				legend: {
+					display: true
+				},
+				tooltip: {
+					backgroundColor: 'rgba(43, 43, 43, 0.8)',
+					titleFont: {
+						weight: 500
+					},
+					footerFont: {
+						weight: 700
+					},
+					callbacks: {
+						title: function(context) {
+							return "J" + context[0].label;
+						},
+						label: function(context) {
+							console.log(context)
+							let label = '#'
+							if (context.parsed.y !== null) {
+								label += context.parsed.y + " " + context.dataset.label
+							}
+							return label;
+						}
+					}
+				}
+			},
+			scales: {
+				x: {
+					grid: {
+						color: "rgb(26, 26, 26)",
+						drawTicks: false,
+					}
+				},
+				y: {
+					//suggestedMax: 14,
+					display: false,
+					min: 0,
+					reverse: true,
+					ticks: {
+						maxTicksLimit: 8,
+					},
+					grid: {
+						titleFont: {
+							weight: 200
+						},
+						color: "rgb(26, 26, 26)",
+						drawTicks: false,
+					}
+				}
+			}
+		}
+	}
+	return config
 }
 
 // |-----------|

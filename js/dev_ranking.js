@@ -84,55 +84,66 @@ fetch('../data/data.json')
 		// Calculer le nombre de journées total
 		matchday_counter = compute_nb_matchdays(games)
 
-		// Construction d'un dictionnaire avec le nom de l'équipe comme clé
-		// et un tableau vide où seront stockés les classements par journée
-		ranking_history = {}
-		for (t in teams) {
-			ranking_history[teams[t].club] = []
-		}
+		/* Evolution du classement */
+		ranking_history = compute_ranking_history(teams, games, matchday_counter)
 
-		matchday_data = []
-		// Calcul du classement pour chaque journée
-		for (let i = 1; i <= matchday_counter; i++) {
-			matchday_data.push(i)
-			ranking_day = compute_ranking_until_matchday(teams, games, i)
-			for (r in ranking_day) {
-				club = ranking_day[r][0]
-				ranking_history[club][i-1] = parseInt(r) +1
-			}
-		}
-
-		document.getElementsByClassName('charts')[0].innerHTML =
-		`
-			<div class="chart">
-				<canvas id="ranking"></canvas>
-			</div>
-		`
-
-		datasets = []
-		colors = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
-
-		let i = 0
-		for (ranking_team in ranking_history) {
-			dataset = {}
-			color_index = i % colors.length
-			dataset['label'] = ranking_team
-			dataset['data'] = ranking_history[ranking_team]
-			dataset['borderColor'] = colors[color_index]
-			dataset['borderWidth'] = 1
-			dataset['pointRadius'] = 3
-			datasets.push(dataset)
-			i++
-		}
-
-		const ctx = document.getElementById('ranking')
-		const data_chart = {
-			labels: matchday_data,
-			datasets: datasets
-		}
-		config = get_chart_config(data_chart, "Evolution du classement")
-		new Chart(ctx, config)
+		display_ranking_evolution(ranking_history)
 	})
+
+function display_ranking_evolution(ranking_history) {
+	document.getElementsByClassName('charts')[0].innerHTML =
+	`
+		<div class="chart">
+			<canvas id="ranking"></canvas>
+		</div>
+	`
+
+	datasets = []
+	colors = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+
+	let i = 0
+	for (ranking_team in ranking_history) {
+		dataset = {}
+		color_index = i % colors.length
+		dataset['label'] = ranking_team
+		dataset['data'] = ranking_history[ranking_team]
+		dataset['borderColor'] = colors[color_index]
+		dataset['backgroundColor'] = colors[color_index]
+		dataset['pointRadius'] = 3
+		dataset['borderWidth'] = 3
+		datasets.push(dataset)
+		i++
+	}
+
+	const ctx = document.getElementById('ranking')
+	const data_chart = {
+		labels: matchday_data,
+		datasets: datasets
+	}
+	config = get_chart_config(data_chart, "Evolution du classement")
+	new Chart(ctx, config)
+}
+
+function compute_ranking_history(teams, games, until_matchday) {
+	/* Construction d'un dictionnaire avec le nom de l'équipe comme clé
+	et un tableau vide où seront stockés les classements par journée */
+	ranking_history = {}
+	for (t in teams) {
+		ranking_history[teams[t].club] = []
+	}
+
+	matchday_data = []
+	/* Calcul du classement pour chaque journée */
+	for (let i = 1; i <= until_matchday; i++) {
+		matchday_data.push(i)
+		ranking_day = compute_ranking_until_matchday(teams, games, i)
+		for (r in ranking_day) {
+			club = ranking_day[r][0]
+			ranking_history[club][i-1] = parseInt(r) +1
+		}
+	}
+	return ranking_history
+}
 
 // Obtenir la configuration d'un graphique
 function get_chart_config(data_chart, title) {
@@ -142,7 +153,7 @@ function get_chart_config(data_chart, title) {
 		options: {
 			interaction: {
 				intersect: false,
-				mode: 'index'
+				mode: 'point'
 			},
 			maintainAspectRatio: false,
 			plugins: {
@@ -165,18 +176,15 @@ function get_chart_config(data_chart, title) {
 						weight: 700
 					},
 					callbacks: {
-						title: function() {
-							return "";
+						title: function(context) {
+							return "J" + context[0].label;
 						},
 						label: function(context) {
-							//console.log(context)			
-							let label = "J" + + " " + context.dataset.label
-							//if (label) {
-							//	label += ' #';
-							//}
-							//if (context.parsed.y !== null) {
-							//	label += context.parsed.y;
-							//}
+							console.log(context)
+							let label = '#'
+							if (context.parsed.y !== null) {
+								label += context.parsed.y + " " + context.dataset.label
+							}
 							return label;
 						}
 					}
