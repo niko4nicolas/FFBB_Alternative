@@ -120,7 +120,7 @@ function display_ranking_evolution(ranking_history) {
 		labels: matchday_data,
 		datasets: datasets
 	}
-	config = get_chart_config(data_chart, "Evolution du classement")
+	config = get_chart_config(data_chart, "Evolution du classement", teams.length)
 	new Chart(ctx, config)
 }
 
@@ -146,7 +146,7 @@ function compute_ranking_history(teams, games, until_matchday) {
 }
 
 // Obtenir la configuration d'un graphique
-function get_chart_config(data_chart, title) {
+function get_chart_config(data_chart, title, nb_teams) {
 	config = {
 		type: 'line',
 		data: data_chart,
@@ -198,9 +198,9 @@ function get_chart_config(data_chart, title) {
 					}
 				},
 				y: {
-					//suggestedMax: 14,
 					display: false,
 					min: 0,
+					max: nb_teams+1,
 					reverse: true,
 					ticks: {
 						maxTicksLimit: 8,

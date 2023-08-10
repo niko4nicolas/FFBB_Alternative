@@ -2,8 +2,23 @@
 // |   Championnat   |
 // |-----------------|
 
-// TODO charger championnat donné (remove hardcoded path)
-fetch('../data/data.json')
+page_championship_id = window.location.search
+page_championship_id = new URLSearchParams(page_championship_id).get('champ')
+
+if (null === page_championship_id) {
+	page_championship_id = localStorage.getItem("selected_championship_id")
+}
+else {
+	localStorage.setItem("selected_championship_id", page_championship_id);
+}
+
+/* Si rien n'est précisé, on tombe dans le cas par défaut avec la compatibilité
+	avece la version sans choix du championnat (ou championnat unique) */
+if (null === page_championship_id) {
+	page_championship_id = 'data'
+}
+
+fetch('../data/'+page_championship_id+'.json')
 	.then((response) => response.json())
 	.then((data) => {
 		// Informations du championnat
@@ -152,7 +167,7 @@ function display_ranking_evolution(ranking_history) {
 		labels: matchday_data,
 		datasets: datasets
 	}
-	config = get_chart_config(data_chart, "Evolution du classement")
+	config = get_chart_config(data_chart, "Evolution du classement", teams.length)
 	new Chart(ctx, config)
 }
 
@@ -258,7 +273,7 @@ function reload_new_pool(new_pool) {
 }
 
 // Obtenir la configuration d'un graphique
-function get_chart_config(data_chart, title) {
+function get_chart_config(data_chart, title, nb_teams) {
 	config = {
 		type: 'line',
 		data: data_chart,
@@ -310,9 +325,9 @@ function get_chart_config(data_chart, title) {
 					}
 				},
 				y: {
-					//suggestedMax: 14,
 					display: false,
 					min: 0,
+					max: nb_teams+1,
 					reverse: true,
 					ticks: {
 						maxTicksLimit: 8,

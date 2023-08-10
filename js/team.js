@@ -7,13 +7,22 @@ Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Rob
 Chart.defaults.font.weight = 400
 Chart.defaults.font.lineHeight = "1.4em"
 
-
 // |------------|
 // |   Équipe   |
 // |------------|
 
-// TODO charger championnat donné (remove hardcoded path)
-fetch('../data/data.json')
+page_championship_id = localStorage.getItem("selected_championship_id")
+
+if (null == page_championship_id) {
+	link_previous = '../'
+}
+else {
+	link_previous = '../championship/?champ='+page_championship_id
+}
+
+document.getElementsByClassName('header-back')[0].setAttribute('href', '../championship/?champ='+page_championship_id)
+
+fetch('../data/'+page_championship_id+'.json')
 	.then((response) => response.json())
 	.then((data) => {
 		// Informations du championnat

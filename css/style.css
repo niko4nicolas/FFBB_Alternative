@@ -67,6 +67,7 @@ body {
 .title {
 	font-size: 1.375rem;
 	font-weight: 700;
+	padding-top: 1em;
 }
 
 .container {
