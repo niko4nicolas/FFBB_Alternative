@@ -2,7 +2,7 @@
 // |   Index		 |
 // |-----------------|
 
-fetch('../data/championships.json')
+fetch('./data/championships.json')
 	.then((response) => response.json())
 	.then((data) => {
 		for (o in data) {
