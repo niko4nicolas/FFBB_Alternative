@@ -7,9 +7,25 @@ ob_start();
 include_once('./simple_html_dom.php');
 include_once('config.php');
 
-function output($str) {
+function output($str, $level=0) {
     $date = date('Y-m-d H:i:s');
-    echo "$date - $str<br>";
+
+    switch ($level) {
+        case 0:
+            $msg_lvl = "";
+            break;
+        case 1:
+            $msg_lvl = "&emsp;&emsp;";
+            break;
+        case 2:
+            $msg_lvl = "&emsp;&emsp;&emsp;&emsp;";
+            break;
+        default:
+            $msg_lvl = "";
+            break;
+    }
+
+    echo "$date - $msg_lvl$str<br>\n";
 
     ob_end_flush();
     ob_flush();
@@ -55,7 +71,7 @@ function scrap_ffbb_championship($championship_id) {
     $championship_url = $url;
     $championship_committee = $html_championship->find('table[class="cadre"] a', 0)->innertext;
 
-    output("Scraping data for $championship_name");
+    output("Récupération des données pour $championship_name");
 
     /* Récupération d'une liste de poules qu'il faut parser en un tableau */
     $parts = explode('=', $temp_pool);
@@ -65,13 +81,16 @@ function scrap_ffbb_championship($championship_id) {
 
     $championship_pools = [];
 
+    $nb_pools_to_scrap = count($list_pools);
+    output("Récupération de $nb_pools_to_scrap poules",1);
+
     /* Pour chaque poule */
     foreach ($list_pools as &$pool) {
         $pool_id = $pool[0];
         $pool_name = $pool[1];
         $pool_id_hex = dechex($pool_id);
 
-        output("Scraping data for $pool_name");
+        output("Récupération des données de $pool_name",1);
 
         /* Récupération de la page du classement pour avoir toutes les équipes de la poule */
         $ranking_url = "https://resultats.ffbb.com/championnat/classements/$championship_id$pool_id_hex.html";
@@ -91,6 +110,8 @@ function scrap_ffbb_championship($championship_id) {
             $team_name = $el_a_team->innertext;
             $team_club = get_team_club($team_name);
             $squad = get_team_squad($team_name);
+
+            output("Récupération des données de $team_name",2);
 
             $team_link = $el_a_team->getAttribute('href');
             $club_id = $team_link;
@@ -230,7 +251,7 @@ function scrap_ffbb_championship($championship_id) {
     $file_size = fwrite($file, $json_data);
     fclose($file);
 
-    output("$file_size bytes written in $output_filename");
+    output("$file_size octets écrits dans $output_filename");
 
     $html_fixtures->clear();
     unset($html_fixtures);
@@ -248,23 +269,38 @@ function scrap_ffbb_championship($championship_id) {
 <html lang="fr">
 
 <head>
-  <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PHP Scraper</title>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Scraper</title>
+
+    <script>
+    function goToBottom() {
+        //window.scrollTo(0, document.body.scrollHeight);
+        var element = document.getElementById("logger");
+        element.scrollTop = element.scrollHeight;
+    }
+    </script>
 </head>
 
 <body style="background-color: black; color: lightgrey; font-family: Consolas, monospace;">
 
+<div id="logger" onchange="goToBottom();" >
 <?php
 
-output("Starting... ");
+output("Lancement du programme...");
 
-foreach ( $array_championships_id as $id ) {
+$nb_championships_to_scrap = count($array_championships_id);
+
+output("Récupération de $nb_championships_to_scrap championnats");
+
+foreach ( $array_championships_id as $index=>$id ) {
+    $index_to_display = $index+1;
+    output("Récupération du championnat $index_to_display / $nb_championships_to_scrap");
     scrap_ffbb_championship($id);
 }
-output("Done!");
-
+output("Récupération terminée !");
 ?>
+</div>
 
 </body>
 
