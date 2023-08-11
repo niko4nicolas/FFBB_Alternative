@@ -242,6 +242,21 @@ function scrap_ffbb_championship($championship_id) {
     return;
 }
 
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHP Scraper</title>
+</head>
+
+<body style="background-color: black; color: lightgrey; font-family: Consolas, monospace;">
+
+<?php
+
 output("Starting... ");
 
 foreach ( $array_championships_id as $id ) {
@@ -250,3 +265,9 @@ foreach ( $array_championships_id as $id ) {
 output("Done!");
 
 ?>
+
+</body>
+
+<footer>
+</footer>
+</html>
