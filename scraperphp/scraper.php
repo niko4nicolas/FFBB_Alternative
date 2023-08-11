@@ -1,5 +1,21 @@
+
 <?php
+
+ob_implicit_flush(true);
+ob_start();
+
 include_once('./simple_html_dom.php');
+include_once('config.php');
+
+function output($str) {
+    $date = date('Y-m-d H:i:s');
+    echo "$date - $str<br>";
+
+    ob_end_flush();
+    ob_flush();
+    flush();
+    ob_start();
+}
 
 function get_team_squad($team_name) {
     $team_squad_search = preg_match('/ - [0-9]/', $team_name); // Recherche numéro d'équipe
@@ -19,12 +35,16 @@ function get_team_club($team_name) {
     return trim($team_name);
 }
 
+function sort_fixtures_by_day($a, $b)
+{
+    return strnatcmp($a['jour'], $b['jour']);
+}
+
 function scrap_ffbb_championship($championship_id) {
     /* Récupération de la page du championnat pour avoir les informations du championnat */
     $url = "https://resultats.ffbb.com/championnat/$championship_id.html";
     $html_championship = file_get_html($url);
 
-    $ret['Titre'] = $html_championship->find('title', 0)->innertext;
     $el_name = $html_championship->getElementById('idTdDivision');
     $el_pool = $el_name->find('script', 0);
     $temp_pool = $el_pool->innertext;
@@ -35,19 +55,23 @@ function scrap_ffbb_championship($championship_id) {
     $championship_url = $url;
     $championship_committee = $html_championship->find('table[class="cadre"] a', 0)->innertext;
 
+    output("Scraping data for $championship_name");
+
     /* Récupération d'une liste de poules qu'il faut parser en un tableau */
     $parts = explode('=', $temp_pool);
     $temp = preg_replace('/[\']/', '"', end($parts));
     $temp = preg_replace('/[;]/', ' ', $temp);
-    $ret['championship_pools'] = json_decode($temp);
+    $list_pools = json_decode($temp);
 
     $championship_pools = [];
 
     /* Pour chaque poule */
-    foreach ($ret['championship_pools'] as &$pool) {
+    foreach ($list_pools as &$pool) {
         $pool_id = $pool[0];
         $pool_name = $pool[1];
         $pool_id_hex = dechex($pool_id);
+
+        output("Scraping data for $pool_name");
 
         /* Récupération de la page du classement pour avoir toutes les équipes de la poule */
         $ranking_url = "https://resultats.ffbb.com/championnat/classements/$championship_id$pool_id_hex.html";
@@ -176,8 +200,8 @@ function scrap_ffbb_championship($championship_id) {
             array_push($teams_data, $team_data);
         }
         
-        /* TODO trier les matchs par journée */
-        //championship_games.sort(key=operator.itemgetter('jour'))
+        /* Tri des matchs par journée */
+        usort($championship_games, "sort_fixtures_by_day");
 
         $pool_data = [
             'id' => $pool_id,
@@ -199,12 +223,14 @@ function scrap_ffbb_championship($championship_id) {
     ];
 
     /* Création du fichier JSON */
-    $output_filename = "$championship_id.json";
+    $output_filename = "../data/$championship_id.json";
 
-    $json_data = json_encode($championship_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    $json_data = json_encode($championship_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     $file = fopen($output_filename ,'w');
-    fwrite($file, $json_data);
+    $file_size = fwrite($file, $json_data);
     fclose($file);
+
+    output("$file_size bytes written in $output_filename");
 
     $html_fixtures->clear();
     unset($html_fixtures);
@@ -216,6 +242,11 @@ function scrap_ffbb_championship($championship_id) {
     return;
 }
 
-scrap_ffbb_championship('b5e6211fe70c');
+output("Starting... ");
+
+foreach ( $array_championships_id as $id ) {
+    scrap_ffbb_championship($id);
+}
+output("Done!");
 
 ?>
