@@ -22,7 +22,11 @@ else {
 
 document.getElementsByClassName('header-back')[0].setAttribute('href', '../championship/?champ='+page_championship_id)
 
-fetch('../data/'+page_championship_id+'.json')
+/* Création d'un numéro de version qui change toutes les 1000s (environ 16 min)
+    pour forcer à recharger le json */
+let version = Date.now().toString().slice(0, -6)
+
+fetch('../data/'+page_championship_id+'.json?v='+version)
 	.then((response) => response.json())
 	.then((data) => {
 		// Informations du championnat
