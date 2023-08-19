@@ -350,6 +350,12 @@ body {
 	border: 5px solid var(--color-black);
 }
 
+@media screen and (max-width: 600px) {
+	.fixture-matchday {
+		bottom: 24px;
+	}
+}
+
 .fixture-matchday-team-selected {
 	color: var(--color-black);
 	background-color: var(--color-white);
