@@ -529,6 +529,61 @@ body {
 	opacity: 1;
 }
 
+/* Liste championnants */
+
+.list-champ {
+	margin-top: 1em;
+	text-align: left;
+}
+
+.list-champ-team {
+	display: flex;
+	font-size: 1rem;
+	color: var(--color-white);
+}
+
+.list-champ-team > a {
+	display: flex;
+	padding: 1em;
+	flex-grow: 1;
+}
+
+.list-champ-team > a:hover {
+	background-color: var(--color-hover);
+	transition: 0.25s;
+}
+
+.list-champ-link {
+	display: flex;
+	justify-content: right;
+	z-index: 1;
+}
+
+.list-champ-link a {
+	display: flex;
+	align-items: right;
+	border-radius: 2px;
+	padding: 4px;
+}
+
+.list-champ-link a:hover {
+	background-color: var(--color-hover);
+}
+
+.list-champ-link a:hover svg {
+	fill: var(--color-white);
+	stroke: var(--color-black);
+}
+
+.list-champ-link svg {
+	width: 1.4em;
+	padding: 0.8em;
+	fill: transparent;
+	stroke-width: 1.5;
+	stroke: var(--color-grey);
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
 
 /* Classement */
 

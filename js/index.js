@@ -5,48 +5,39 @@
 fetch('./data/championships.json')
 	.then((response) => response.json())
 	.then((data) => {
+		var element_inner_html = ""
 		for (o in data) {
-			document.getElementById('list-championships').innerHTML +=
+
+			element_inner_html +=
 			`
 			<div class="title">${data[o].organisation}</div>
-			<ul class="ranking">
+			<ul class="list-champ">
 			`
+			console.log(data[o].organisation)
 
 			for (c in data[o].championships) {
 				championship = data[o].championships[c]
 				console.log(championship)
 
-				document.getElementById('list-championships').innerHTML +=
+				element_inner_html +=
 				`
-				<li class="ranking-team">
-				<a href="./championship/?champ=${championship.id}">
-					<div class="ranking-rank"></div>
-					<div class="ranking-icon"><svg width="8" height="8" viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" stroke="rgb(184, 184, 184)" stroke-width="16"/></svg></div>
-					<div class="ranking-name">
-						<div class="ranking-club">${championship.nom}</div>
-					</div>
-					<div></div>
-					<div class="hidden-on-mobile"></div>
-					<div class="hidden-on-mobile"></div>
-					<div class="hidden-on-mobile"></div>
-					<div class="hidden-on-mobile"></div>
-					<div></div>
-					<div class="ranking-points"></div>
-					<div class="ranking-link hidden-on-mobile">
-						<object><a href="${championship.lien_championnat}" target="_blank">
-							<svg viewBox="0 0 24 24"><path d="M21 3.6v16.8a.6.6 0 01-.6.6H3.6a.6.6 0 01-.6-.6V3.6a.6.6 0 01.6-.6h16.8a.6.6 0 01.6.6z"></path><path d="M15.025 8.025h-4.95m4.95 0v4.95m0-4.95l-3.535 3.536c-2.475 2.475 0 4.95 0 4.95"></path></svg>
-						</a></object>
-					</div>
-				</a>
+				<li class="list-champ-team">
+				<a href="./championship/?champ=${championship.id}">${championship.nom}</a>
+				<div class="list-champ-link hidden-on-mobile">
+				<object><a href="${championship.lien_championnat}" target="_blank">
+					<svg viewBox="0 0 24 24"><path d="M21 3.6v16.8a.6.6 0 01-.6.6H3.6a.6.6 0 01-.6-.6V3.6a.6.6 0 01.6-.6h16.8a.6.6 0 01.6.6z"></path><path d="M15.025 8.025h-4.95m4.95 0v4.95m0-4.95l-3.535 3.536c-2.475 2.475 0 4.95 0 4.95"></path></svg>
+				</a></object>
+				</div>
 				</li>
 				`
 			}
 
-			document.getElementById('list-championships').innerHTML +=
+			element_inner_html +=
 			`
 			</ul>
 			`
 		}
+		document.getElementById('list-championships').innerHTML = element_inner_html;
 	})
 
 // |---------------|
